@@ -9,7 +9,7 @@ on:
 jobs:
   test-workflow:
     runs-on: ubuntu-latest
-    environment: initial-approval # GitHub looks for secrets here first
+    environment: initial-approval 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -25,11 +25,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install black # Ensures black is available even if not in requirements.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Check Code Formatting (Black)
+        run: black . --check --diff
 
       - name: Run DeepEval Unit Tests
         env:
-          # This will now pull from the 'initial-approval' environment secrets
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} 
           EXECUTION_ENV: ${{ secrets.EXECUTION_ENV }}
         run: |

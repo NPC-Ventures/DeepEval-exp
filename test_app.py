@@ -20,7 +20,6 @@ expected_output = "A persistent cough and fever could indicate a range of illnes
 test_case = LLMTestCase(
     input=input,
     actual_output=actual_output,
-    expected_output=expected_output,
-)
+    expected_output=expected_output,)
 
 evaluate([test_case], [correctness_metric])
