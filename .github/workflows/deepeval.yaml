@@ -7,9 +7,25 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test-workflow:
+  # STAGE 1: Quick Style Check (Automatic)
+  format:
     runs-on: ubuntu-latest
-    environment: initial-approval 
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Run Black Check
+        run: |
+          pip install black
+          black . --check --diff
+
+  # STAGE 2: Approval -> Install -> Test
+  test:
+    runs-on: ubuntu-latest
+    needs: format # Ensures formatting passes first
+    environment: initial-approval # Pauses here for your manual click
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -18,22 +34,18 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+          cache: 'pip' # Speeds up repeat runs
 
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y graphviz graphviz-dev
-
-      - name: Install dependencies
+      - name: Install System & Python Dependencies
+        # We group these here so they only run after you've approved the job
         run: |
+          sudo apt-get update && sudo apt-get install -y graphviz graphviz-dev
           python -m pip install --upgrade pip
-          pip install black # Ensures black is available even if not in requirements.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Check Code Formatting (Black)
-        run: black . --check --diff
 
       - name: Run DeepEval Unit Tests
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} 
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EXECUTION_ENV: ${{ secrets.EXECUTION_ENV }}
         run: |
           output=$(deepeval test run deepeval_tests)
