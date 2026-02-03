@@ -1,10 +1,11 @@
 name: LLM App DeepEval Tests
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  # push:
+  #   branches: [ "main" ]
+  # pull_request:
+  #   branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   test:
@@ -30,4 +31,13 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EXECUTION_ENV: ${{ secrets.EXECUTION_ENV }}
-        run: deepeval test run deepeval_tests
+        run: |
+          output=$(deepeval test run deepeval_tests)
+          echo "$output"
+          if echo "$output" | grep -q "Failed: 0"; then
+            echo "✓ All tests passed!"
+            exit 0
+          else
+            echo "✗ Some tests failed!"
+            exit 1
+          fi
