@@ -39,9 +39,15 @@ summarizer = MeetingSummarizer()  # Initialize with your best config
 @pytest.mark.parametrize("golden", dataset.goldens)
 def test(golden: Golden):
     summary, action_items = summarizer.summarize(golden.input)
-    summary_test_case = LLMTestCase(input=golden.input, actual_output=summary)
+    summary_test_case = LLMTestCase(
+        name=f"Summary Test for {golden.input[:20]}",
+        input=golden.input,
+        actual_output=summary,
+    )
     action_item_test_case = LLMTestCase(
-        input=golden.input, actual_output=str(action_items)
+        name=f"Action Item Test for {golden.input[:20]}",
+        input=golden.input,
+        actual_output=str(action_items),
     )
 
     evaluator = Evaluator()
