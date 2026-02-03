@@ -7,10 +7,10 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test:
+  test-workflow:
     runs-on: ubuntu-latest
+    environment: initial-approval # GitHub looks for secrets here first
     steps:
-      - uses: trstringer/manual-approval@v1
       - name: Checkout Code
         uses: actions/checkout@v2
 
@@ -29,7 +29,8 @@ jobs:
 
       - name: Run DeepEval Unit Tests
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # This will now pull from the 'initial-approval' environment secrets
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} 
           EXECUTION_ENV: ${{ secrets.EXECUTION_ENV }}
         run: |
           output=$(deepeval test run deepeval_tests)
