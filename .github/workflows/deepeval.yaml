@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.13.3"
       - name: Run Black Check
         run: |
           pip install black
@@ -33,8 +33,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
-          cache: 'pip' # Speeds up repeat runs
+          python-version: "3.13.3"
 
       - name: Install System & Python Dependencies
         # We group these here so they only run after you've approved the job
