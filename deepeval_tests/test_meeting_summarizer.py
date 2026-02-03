@@ -1,12 +1,17 @@
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 import os
+import sys
 from deepeval.dataset import Golden, EvaluationDataset
-from .meeting_summarizer import MeetingSummarizer
+
+# Add parent directory to path so we can import meeting_summarizer
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from src.meeting_summarizer.meeting_summarizer import MeetingSummarizer
 from deepeval import evaluate
 import json
-from .evaluator import Evaluator
+from src.utils.evaluator import Evaluator
 
-documents_path = "transcripts"
+documents_path = "src/meeting_summarizer/transcripts"
 transcripts = []
 
 for document in os.listdir(documents_path):
