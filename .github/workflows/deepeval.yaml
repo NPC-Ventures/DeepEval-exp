@@ -1,13 +1,17 @@
 name: LLM App DeepEval Tests
 
-on:
+# on:
   # push:
   #   branches: [ "main" ]
   # pull_request:
   #   branches: [ "main" ]
-  workflow_dispatch:
 
 jobs:
+
+  approval:
+      steps:
+        - uses: trstringer/manual-approval@v1
+  
   test:
     runs-on: ubuntu-latest
     steps:
