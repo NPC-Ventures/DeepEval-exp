@@ -4,7 +4,6 @@ from openai import OpenAI
 import ollama
 import json
 
-
 load_dotenv("../.env")
 
 
