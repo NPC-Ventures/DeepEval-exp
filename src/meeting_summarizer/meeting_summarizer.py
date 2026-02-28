@@ -1,28 +1,34 @@
-import os
-from dotenv import load_dotenv
-from openai import OpenAI
-import ollama
 import json
+import sys
+from pathlib import Path
 
-load_dotenv("../.env")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.utils.model_provider import ModelProvider
 
 
 class MeetingSummarizer:
     def __init__(
         self,
-        model: str = "gpt-4",
+        model: str | None = None,
+        llm_model: str | None = None,
+        embedding_model: str | None = None,
+        exec_env: str | None = None,
         summary_system_prompt: str = "",
         action_item_system_prompt: str = "",
     ):
-        self.exec_env = os.getenv("EXECUTION_ENV", "local").lower()
-        self.model = (
-            model if self.exec_env == "cloud" else os.getenv("LOCAL_MODEL_NAME")
+        selected_llm_model = llm_model or model
+        self.model_provider = ModelProvider(
+            exec_env=exec_env,
+            llm_model=selected_llm_model,
+            embedding_model=embedding_model,
         )
-        self.client = (
-            OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            if self.exec_env == "cloud"
-            else None
-        )
+        self.exec_env = self.model_provider.exec_env
+        self.model = self.model_provider.llm_model
+        self.embedding_model_name = self.model_provider.embedding_model
+        self.embedding_model = self.model_provider.get_langchain_embeddings()
         self.summary_system_prompt = summary_system_prompt or (
             "You are an expert meeting summarizer. Your task is to read the provided meeting transcript and generate a concise summary that captures the key points discussed, decisions made, and action items assigned. The summary should be clear, well-structured, and easy to understand."
         )
@@ -42,70 +48,25 @@ and team-wide action items in the following format:
 Only include what is explicitly mentioned. Do not infer. You must respond strictly in 
 valid JSON format — no extra text or commentary."""
         )
-        self.base_url = (
-            os.getenv("LOCAL_MODEL_BASE_URL") if self.exec_env == "local" else None
-        )
 
     def get_summary(self, transcript: str) -> str:
         try:
-            if self.exec_env == "local":
-                response = ollama.chat(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": self.summary_system_prompt},
-                        {"role": "user", "content": transcript},
-                    ],
-                )
-                summary = response["message"]["content"].strip()
-                return summary
-            elif self.exec_env == "cloud":
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": self.summary_system_prompt},
-                        {"role": "user", "content": transcript},
-                    ],
-                )
-
-                summary = response.choices[0].message.content.strip()
-                return summary
-            else:
-                raise ValueError(f"Unsupported execution environment: {self.exec_env}")
+            return self.model_provider.chat_completion(
+                system_prompt=self.summary_system_prompt,
+                user_prompt=transcript,
+                model_name=self.model,
+            )
         except Exception as e:
             print(f"Error generating summary: {e}")
             return f"Error: Could not generate summary due to API issue: {e}"
 
     def get_action_items(self, transcript: str) -> dict:
         try:
-            if self.exec_env == "local":
-                response = ollama.chat(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": self.action_item_system_prompt},
-                        {"role": "user", "content": transcript},
-                    ],
-                )
-
-                action_items = response["message"]["content"].strip()
-                try:
-                    return json.loads(action_items)
-                except json.JSONDecodeError:
-                    return {
-                        "error": "Invalid JSON returned from model",
-                        "raw_output": action_items,
-                    }
-            elif self.exec_env == "cloud":
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": self.action_item_system_prompt},
-                        {"role": "user", "content": transcript},
-                    ],
-                )
-
-                action_items = response.choices[0].message.content.strip()
-            else:
-                raise ValueError(f"Unsupported execution environment: {self.exec_env}")
+            action_items = self.model_provider.chat_completion(
+                system_prompt=self.action_item_system_prompt,
+                user_prompt=transcript,
+                model_name=self.model,
+            )
             try:
                 return json.loads(action_items)
             except json.JSONDecodeError:
@@ -125,7 +86,8 @@ valid JSON format — no extra text or commentary."""
 
 
 if __name__ == "__main__":
-    with open("transcripts/meeting_transcript.txt", "r") as file:
+    transcript_path = Path(__file__).parent / "transcripts" / "meeting_transcript.txt"
+    with open(transcript_path, "r", encoding="utf-8") as file:
         transcript = file.read().strip()
 
     summarizer = MeetingSummarizer()

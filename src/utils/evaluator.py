@@ -8,7 +8,7 @@ class Evaluator:
     def __init__(self):
         load_dotenv(".env")
         self.exec_env = os.getenv("EXECUTION_ENV", "local").lower()
-        self.model = os.getenv("LOCAL_MODEL_NAME") if self.exec_env == "local" else None
+        self.model = os.getenv("LOCAL_LLM_MODEL") if self.exec_env == "local" else None
         self.base_url = (
             os.getenv("LOCAL_MODEL_BASE_URL") if self.exec_env == "local" else None
         )
