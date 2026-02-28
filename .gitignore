@@ -3,3 +3,4 @@ __pycache__
 .env
 .deepeval
 .pytest_cache
+.DS_Store
