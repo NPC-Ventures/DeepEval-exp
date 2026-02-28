@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.meeting_summarizer.meeting_summarizer import MeetingSummarizer
 from deepeval import evaluate
-from src.utils.evaluator import Evaluator
+from src.utils.metric_factory import MetricFactory
 from deepeval import assert_test
 import pytest
 
@@ -50,9 +50,9 @@ def test(golden: Golden):
         actual_output=str(action_items),
     )
 
-    evaluator = Evaluator()
+    metric_factory = MetricFactory()
 
-    summary_concision = evaluator.build_metric(
+    summary_concision = metric_factory.build_metric(
         name="Summary Concision",
         # Write your criteria here
         criteria="Assess whether the summary is concise and focused only on the essential points of the meeting? It should avoid repetition, irrelevant details, and unnecessary elaboration.",
@@ -60,7 +60,7 @@ def test(golden: Golden):
         evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
     )
 
-    action_item_check = evaluator.build_metric(
+    action_item_check = metric_factory.build_metric(
         name="Action Item Accuracy",
         # Write your criteria here
         criteria="Are the action items accurate, complete, and clearly reflect the key tasks or follow-ups mentioned in the meeting?",

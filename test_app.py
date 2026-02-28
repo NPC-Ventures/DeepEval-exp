@@ -1,9 +1,9 @@
 from deepeval import evaluate
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
-from src.utils.evaluator import Evaluator
+from src.utils.metric_factory import MetricFactory
 
-evaluator = Evaluator()
-correctness_metric = evaluator.build_metric(
+metric_factory = MetricFactory()
+correctness_metric = metric_factory.build_metric(
     name="Correctness",
     criteria="Determine if the 'actual output' is correct based on the 'expected output'.",
     evaluation_params=[

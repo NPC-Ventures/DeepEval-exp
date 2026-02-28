@@ -9,7 +9,7 @@ from deepeval import assert_test
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.rag_agent.main import RAGAgent
-from src.utils.evaluator import Evaluator
+from src.utils.metric_factory import MetricFactory
 
 
 QA_GOLDENS = [
@@ -109,9 +109,9 @@ if not document_paths:
     raise FileNotFoundError(f"No PDF files found in: {documents_dir}")
 
 rag_agent = RAGAgent(document_paths=document_paths)
-evaluator = Evaluator()
+metric_factory = MetricFactory()
 
-correctness_metric = evaluator.build_metric(
+correctness_metric = metric_factory.build_metric(
     name="RAG Correctness",
     criteria="Determine whether the actual output answer is factually consistent with the expected output answer.",
     evaluation_params=[
@@ -122,7 +122,7 @@ correctness_metric = evaluator.build_metric(
     threshold=0.7,
 )
 
-grounding_metric = evaluator.build_metric(
+grounding_metric = metric_factory.build_metric(
     name="RAG Grounding",
     criteria="Evaluate if the actual output is grounded in the retrieval context and avoids unsupported claims or invented details.",
     evaluation_params=[
