@@ -1,6 +1,7 @@
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+import asyncio
 import json
 import sys
 from pathlib import Path
@@ -23,7 +24,7 @@ class RAGAgent:
         chunk_size: int = 500,
         chunk_overlap: int = 50,
         vector_store_class=FAISS,
-        k: int = 2,
+        k: int = 5,
     ):
         self.document_paths = document_paths
         self.chunk_size = chunk_size
@@ -31,7 +32,9 @@ class RAGAgent:
         self.model_provider = ModelProvider(
             exec_env=exec_env,
             llm_model=llm_model if isinstance(llm_model, str) else None,
-            embedding_model=embedding_model if isinstance(embedding_model, str) else None,
+            embedding_model=(
+                embedding_model if isinstance(embedding_model, str) else None
+            ),
         )
         self.embedding_model = (
             embedding_model
@@ -96,7 +99,36 @@ class RAGAgent:
     def answer(self, query: str):
         retrieved_docs = self.retrieve(query)
         generated_answer = self.generate(query, retrieved_docs)
+        return self._parse_json_response(generated_answer)
 
+    async def generate_async(
+        self,
+        query: str,
+        retrieved_docs: list,
+        llm_model=None,
+        prompt_template: str = None,
+    ):
+        context = "\n".join(retrieved_docs)
+        if llm_model is None:
+            model = self.default_llm_model
+        elif isinstance(llm_model, str):
+            model = self.model_provider.get_langchain_llm(model_name=llm_model)
+        else:
+            model = llm_model
+        prompt = prompt_template or rag_prompt
+        prompt = prompt.format(context=context, query=query)
+        if hasattr(model, "ainvoke"):
+            response = await model.ainvoke(prompt)
+        else:
+            response = await asyncio.to_thread(model.invoke, prompt)
+        return response.content if hasattr(response, "content") else str(response)
+
+    async def answer_async(self, query: str):
+        retrieved_docs = self.retrieve(query)
+        generated_answer = await self.generate_async(query, retrieved_docs)
+        return self._parse_json_response(generated_answer)
+
+    def _parse_json_response(self, generated_answer: str):
         try:
             res = json.loads(generated_answer)
             return res

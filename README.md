@@ -6,16 +6,23 @@ An evaluation framework for meeting summarization using DeepEval with support fo
 
 ```
 DeepEval/
-├── evaluator.py                 # Main evaluator
-├── test_app.py                  # Main test application
-├── meeting_summarizer/          # Meeting summarizer module
-│   ├── evaluator.py             # Meeting summarizer evaluator
-│   ├── meeting_summarizer.py    # Cloud-based meeting summarizer
-│   ├── meeting_summarizer_local.py # Local Ollama-based summarizer
-│   ├── test_app.py              # Cloud test application
-│   ├── test_app_local.py        # Local test application
-│   └── transcripts/             # Sample meeting transcripts
-└── requirements.txt             # Project dependencies
+├── src/
+│   ├── meeting_summarizer/
+│   │   ├── meeting_summarizer.py
+│   │   └── transcripts/
+│   ├── rag_agent/
+│   │   ├── main.py
+│   │   └── documents/
+│   └── utils/
+│       ├── metric_factory.py
+│       └── model_provider.py
+├── deepeval_tests/
+│   ├── goldens/
+│   │   └── ipcc_rag_goldens.json   # RAG golden Q/A dataset
+│   ├── test_meeting_summarizer.py
+│   └── test_rag_agent.py
+├── test_app.py
+└── requirements.txt
 ```
 
 ## Setup Instructions
@@ -64,6 +71,11 @@ OPENAI_API_KEY=your_openai_api_key
 #### Run DeepEval Tests
 ```bash
 deepeval test run test_app.py
+```
+
+#### Run RAG Golden Tests
+```bash
+deepeval test run deepeval_tests/test_rag_agent.py
 ```
 
 ### Local Evaluation with Ollama
@@ -142,6 +154,6 @@ See `requirements.txt` for the complete list of dependencies.
 
 ## Notes
 
-- Meeting transcripts are stored in `meeting_summarizer/transcripts/`
-
+- Meeting transcripts are stored in `src/meeting_summarizer/transcripts/`
+- RAG goldens are stored in `deepeval_tests/goldens/ipcc_rag_goldens.json`
 
